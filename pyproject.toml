@@ -9,7 +9,7 @@ description = "Check a GitHub profile README for dead links, missing alt text an
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Pedro Belentani", url = "https://belentani.es" }]
+authors = [{ name = "Pedro Belentani" }]
 keywords = ["github", "profile", "readme", "lint", "cli"]
 classifiers = [
     "Environment :: Console",
@@ -23,6 +23,7 @@ profile-lint = "profilelint.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/belentani7/profile-lint"
+Author = "https://belentani.es"
 
 [tool.setuptools]
 packages = ["profilelint"]

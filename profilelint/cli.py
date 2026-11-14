@@ -30,7 +30,12 @@ def build_parser() -> argparse.ArgumentParser:
         prog="profile-lint",
         description="Check a GitHub profile README for dead links, missing alt text and unverifiable claims.",
     )
-    parser.add_argument("readme", nargs="?", default="README.md", help="path to the README (default: README.md)")
+    parser.add_argument(
+        "readme",
+        nargs="?",
+        default="README.md",
+        help="path to the README, or - to read it from stdin (default: README.md)",
+    )
     parser.add_argument("--root", default=None, help="directory that relative links resolve against (default: README's folder)")
     parser.add_argument("--links", action="store_true", help="also request every external link (network)")
     parser.add_argument("--json", action="store_true", help="machine-readable output")
@@ -38,15 +43,24 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv=None) -> int:
-    args = build_parser().parse_args(argv)
+def _load(args):
+    """Return (text, root, label) or (None, None, path) when the file is missing."""
+    if args.readme == "-":
+        return sys.stdin.read(), (Path(args.root) if args.root else None), "<stdin>"
     path = Path(args.readme)
     if not path.is_file():
-        print(f"profile-lint: not a file: {path}", file=sys.stderr)
+        return None, None, path
+    root = Path(args.root) if args.root else path.parent
+    return path.read_text(encoding="utf-8"), root, path
+
+
+def main(argv=None) -> int:
+    args = build_parser().parse_args(argv)
+    text, root, label = _load(args)
+    if text is None:
+        print(f"profile-lint: not a file: {label}", file=sys.stderr)
         return 2
 
-    root = Path(args.root) if args.root else path.parent
-    text = path.read_text(encoding="utf-8")
     findings = lint(
         text,
         root,
@@ -57,7 +71,7 @@ def main(argv=None) -> int:
 
     if args.json:
         payload = {
-            "file": str(path),
+            "file": str(label),
             "bytes": len(text.encode("utf-8")),
             "summary": summary,
             "findings": [f.as_dict() for f in findings],
@@ -65,8 +79,8 @@ def main(argv=None) -> int:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
     else:
         for finding in findings:
-            label = "error" if finding.severity == "error" else "warn "
-            print(f"{path}:{finding.line}: {label} [{finding.rule}] {finding.message}")
+            level = "error" if finding.severity == "error" else "warn "
+            print(f"{label}:{finding.line}: {level} [{finding.rule}] {finding.message}")
         state = "ok" if summary["ok"] else "failed"
         print(
             f"\n{state}: {summary['errors']} error(s), {summary['warnings']} warning(s), "

@@ -21,6 +21,12 @@ Check the external links too (network, one HEAD request each):
 profile-lint README.md --root . --links
 ```
 
+Check a README you do not have on disk, without saving a temporary file:
+
+```bash
+gh api repos/someone/someone/readme -H "Accept: application/vnd.github.raw" | profile-lint -
+```
+
 Machine-readable output for CI:
 
 ```bash

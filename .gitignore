@@ -1,12 +1,29 @@
-# Generated OS metadata, Python bytecode, and HTML reports
+# Metadatos generados por macOS y Windows
 .DS_Store
 ._*
 __MACOSX/
 Thumbs.db
 Desktop.ini
 desktop.ini
+
+# Python y empaquetado
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Lint, tipos, pruebas y cobertura
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
 htmlcov/
 playwright-report/

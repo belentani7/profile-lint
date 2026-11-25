@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # Se fija la imagen para conservar Python 3.9 y probar hasta la versión estable actual.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - name: Obtener el código
+        # SHA de la release v7.0.1; evita que una etiqueta móvil cambie el código ejecutado.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Preparar Python
+        # SHA de la release v7.1.0; evita que una etiqueta móvil cambie el código ejecutado.
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Instalar herramientas de desarrollo
+        run: python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check .
+      - name: Comprobar formato
+        run: ruff format --check .
+      - name: Pruebas unitarias y de CLI
+        run: python -m unittest discover -s tests -v
+      - name: Probar el linter con este repositorio
+        run: python -m profilelint.cli README.md --root . --max-bytes 12000
+      - name: Construir el paquete
+        run: python -m build
